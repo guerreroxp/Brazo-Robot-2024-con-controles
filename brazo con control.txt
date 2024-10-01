@@ -1,0 +1,116 @@
+#include <Servo.h>
+
+// Definición de Servos
+Servo servo1;  // BASE
+Servo servo2;  // HOMBRO1
+Servo servo3;  // HOMBRO2
+Servo servo4;  // CODO1
+Servo servo5;  // CODO2
+Servo servo6;  // MUÑECA
+Servo servo7;  // GRIPPER
+
+// Pines para los Joysticks
+int joy1X = A0; // Eje X del Joystick 1
+int joy1Y = A1; // Eje Y del Joystick 1
+int joy2X = A2; // Eje X del Joystick 2
+int joy2Y = A3; // Eje Y del Joystick 2
+
+// Velocidades de Movimiento
+int s1Vel = 15; // BASE    
+int s2Vel = 25; // HOMBRO
+int s4Vel = 20; // CODO1
+int s5Vel = 20; // CODO2
+int s6Vel = 15; // MUÑECA
+int s7Vel = 15; // GRIPPER
+
+// Posición Actual de los Servos
+int s1Act, s2Act, s3Act, s4Act, s5Act, s6Act, s7Act;
+int s1Ant = 90, s2Ant = 100, s3Ant = 80, s4Ant = 115, s5Ant = 60, s6Ant = 90, s7Ant = 60;
+
+void setup() {
+  Serial.begin(115200);
+
+  // Configuración de los Servos
+  servo1.attach(5, 510, 1200);
+  servo2.attach(11, 650, 1400);
+  servo3.attach(6, 650, 1400);
+  servo4.attach(7, 650, 1400);
+  servo5.attach(8, 650, 1400);
+  servo6.attach(9, 800, 1290);
+  servo7.attach(10, 700, 1290);
+
+  // Establecer las posiciones iniciales
+  servo1.write(s1Ant);
+  servo2.write(s2Ant);
+  servo3.write(s3Ant);
+  servo4.write(s4Ant);
+  servo5.write(s5Ant);
+  servo6.write(s6Ant);
+  servo7.write(s7Ant);
+
+  delay(50);
+}
+
+void loop() {
+  // Leer entradas de los joysticks
+  int joy1XVal = analogRead(joy1X);
+  int joy1YVal = analogRead(joy1Y);
+  int joy2XVal = analogRead(joy2X);
+  int joy2YVal = analogRead(joy2Y);
+
+  // Mapear las entradas de los joysticks a los ángulos de los servos
+  s1Act = map(joy1XVal, 0, 1023, 0, 180);  // Controlar la BASE con el eje X del Joystick 1
+  s2Act = map(joy1YVal, 0, 1023, 0, 180);  // Controlar HOMBRO1 con el eje Y del Joystick 1
+  s4Act = map(joy2XVal, 0, 1023, 0, 180);  // Controlar CODO1 con el eje X del Joystick 2
+  s6Act = map(joy2YVal, 0, 1023, 0, 180);  // Controlar la MUÑECA con el eje Y del Joystick 2
+
+  // Mover Servos BASE (servo1)
+  moverServo(servo1, s1Ant, s1Act, s1Vel);
+  s1Ant = s1Act;
+
+  // Mover Servos HOMBRO (servo2 y servo3)
+  moverServoHombro(s2Ant, s2Act, s2Vel);
+  s2Ant = s2Act;
+
+  // Mover Servo CODO1 (servo4)
+  moverServo(servo4, s4Ant, s4Act, s4Vel);
+  s4Ant = s4Act;
+
+  // Mover Servo MUÑECA (servo6)
+  moverServo(servo6, s6Ant, s6Act, s6Vel);
+  s6Ant = s6Act;
+
+  delay(50);  // Pequeño retardo para evitar sobrecargar la lectura
+}
+
+// Función para mover un solo servo de una posición a otra con una velocidad determinada
+void moverServo(Servo &servo, int &posAnt, int posAct, int velocidad) {
+  if (posAnt > posAct) {
+    for (int j = posAnt; j >= posAct; j--) {
+      servo.write(j);
+      delay(velocidad);
+    }
+  } else {
+    for (int j = posAnt; j <= posAct; j++) {
+      servo.write(j);
+      delay(velocidad);
+    }
+  }
+}
+
+// Función para mover los dos servos del HOMBRO al mismo tiempo (servo2 y servo3)
+void moverServoHombro(int &posAnt, int posAct, int velocidad) {
+  if (posAnt > posAct) {
+    for (int j = posAnt; j >= posAct; j--) {
+      servo2.write(j);
+      servo3.write(180 - j);
+      delay(velocidad);
+    }
+  } else {
+    for (int j = posAnt; j <= posAct; j++) {
+      servo2.write(j);
+      servo3.write(180 - j);
+      delay(velocidad);
+    }
+  }
+}
